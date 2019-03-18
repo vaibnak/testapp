@@ -15,6 +15,7 @@ public class Seepic extends AppCompatActivity {
     private ImageView imageView;
     private Button ok_btn;
     private Button g_back;
+    private File cfile;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,14 +26,19 @@ public class Seepic extends AppCompatActivity {
         g_back = findViewById(R.id.gback);
         Bundle extras = intent.getExtras();
         byte[] byteArray = extras.getByteArray("picture");
-        File myfile = (File)extras.get("picfile");
+        cfile = (File)extras.get("picfile");
         Bitmap bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
         imageView.setImageBitmap(bmp);
     }
 
     public void takePic(View view) {
+        Intent intent = new Intent(getApplicationContext(), Takepic.class);
+        startActivity(intent);
     }
 
     public void okPic(View view) {
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        intent.putExtra("picfile", cfile);
+        startActivity(intent);
     }
 }
