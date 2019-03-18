@@ -1,6 +1,8 @@
 package com.example.user.testapp;
 
 import android.content.Intent;
+import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -8,6 +10,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
 
@@ -22,21 +30,25 @@ public class MainActivity extends AppCompatActivity {
     private Button btnaddpic;
     private String mob;
     private File cfile,myfile;
+    private Boolean ispic;
+    private StorageReference mStorageRef;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ispic = false;
         Intent intent = getIntent();
         if(intent.getExtras() != null){
             myfile = (File)intent.getExtras().get("picfile");
             if(myfile != null){
                 Log.i("original file size : ", Long.toString(myfile.length()));
+                ispic = true;
                 compressit(myfile);
             }else{
                 Log.i("your file", " is null");
             }
         }
-
+        mStorageRef = FirebaseStorage.getInstance().getReference();
         textInputEditText = findViewById(R.id.inp_mb);
         btnup = findViewById(R.id.btn_up);
         btnaddpic = findViewById(R.id.btn_addpic);
@@ -44,10 +56,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void upld(View view) {
         mob = textInputEditText.getText().toString();
-        if(mob.length() != 10){
+        if(mob.length() != 10 || (ispic == false)){
             Toast.makeText(getApplicationContext(), "mobile number not ok", Toast.LENGTH_SHORT).show();
         }else{
             Toast.makeText(getApplicationContext(), "everything alright", Toast.LENGTH_SHORT).show();
+            uploadFile(cfile);
         }
     }
 
@@ -65,15 +78,34 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void accept(File file) {
                         cfile = file;
-                        Log.i("compression: ", "done");
-                        Log.i("compressed file size: ", Long.toString(cfile.length()));
-                        Log.i("org file size: ", Long.toString(myfile.length()));
-                        Log.i("compressed file path", cfile.getPath());
                     }
                 }, new Consumer<Throwable>() {
                     @Override
                     public void accept(Throwable throwable) {
                         throwable.printStackTrace();
+                    }
+                });
+    }
+
+    public void uploadFile(File cfile){
+        Uri file = Uri.fromFile(new File(cfile.getPath()));
+        StorageReference riversRef = mStorageRef.child("images/"+System.currentTimeMillis()+".jpg");
+
+        riversRef.putFile(file)
+                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                        Toast.makeText(getApplicationContext(), "file uploaded sucessfully", Toast.LENGTH_SHORT).show();
+                        Log.i("myfile path: ", myfile.getPath());
+                        myfile.delete();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
+                        Toast.makeText(getApplicationContext(), "file upload failure " , Toast.LENGTH_SHORT).show();
+                        Log.i("error", exception.toString());
                     }
                 });
     }
