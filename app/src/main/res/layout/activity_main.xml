@@ -31,7 +31,9 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="242dp"
-        android:text="Add picture" />
+        android:text="Add picture"
+        android:onClick="take_pht"
+        />
 
     <Button
         android:id="@+id/btn_up"

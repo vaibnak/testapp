@@ -1,5 +1,6 @@
 package com.example.user.testapp;
 
+import android.content.Intent;
 import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -28,5 +29,10 @@ public class MainActivity extends AppCompatActivity {
         }else{
             Toast.makeText(getApplicationContext(), "everything alright", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public void take_pht(View view) {
+        Intent intent = new Intent(getApplicationContext(), Takepic.class);
+        startActivity(intent);
     }
 }
