@@ -17,11 +17,18 @@ import com.google.android.gms.tasks.TaskExecutors;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import id.zelory.compressor.Compressor;
@@ -29,7 +36,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ExampleDialog.ExampleDialogListener {
     private TextInputEditText textInputEditText;
     private Button btnup;
     private Button btnaddpic;
@@ -38,10 +45,14 @@ public class MainActivity extends AppCompatActivity {
     private Boolean ispic;
     private String mVerificationId;
     private StorageReference mStorageRef;
+    private FirebaseDatabase database;
+    private DatabaseReference myRef;
+    private String otpCode;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        database = FirebaseDatabase.getInstance();
         ispic = false;
         Intent intent = getIntent();
         if(intent.getExtras() != null){
@@ -59,16 +70,55 @@ public class MainActivity extends AppCompatActivity {
         btnup = findViewById(R.id.btn_up);
         btnaddpic = findViewById(R.id.btn_addpic);
     }
-
-    public void upld(View view) {
-//        mob = textInputEditText.getText().toString();
-//        if(mob.length() != 10 || (ispic == false)){
-//            Toast.makeText(getApplicationContext(), "mobile number not ok", Toast.LENGTH_SHORT).show();
-//        }else{
-//            Toast.makeText(getApplicationContext(), "everything alright", Toast.LENGTH_SHORT).show();
-//            uploadFile(cfile);
-//        }
+    @Override
+    public void applyTexts(String otp) {
+        Log.i("otp: ", otp);
+        if(otp.equals(otpCode)){
+            uploadFile(cfile, mob, "visitors");
+        }else{
+            uploadFile(cfile, mob, "suspicious_users");
+        }
+    }
+    public void newUser(){
         sendotp();
+        ExampleDialog exampleDialog = new ExampleDialog();
+        exampleDialog.show(getSupportFragmentManager(), "example dialog");
+    }
+    public void preUser(){
+        uploadFile(cfile, mob, "visitors");
+    }
+    public void upld(View view) {
+        mob = textInputEditText.getText().toString();
+        if(mob.length() != 10 || (ispic == false)){
+            //implement a snackbar here
+            Toast.makeText(getApplicationContext(), "mobile number not ok", Toast.LENGTH_SHORT).show();
+        }else{
+            //Now check if the no. is already registered in the database if yes, then just call the uploadFile function
+            //if not call otp screen logic and use the sendotp code
+
+           final ArrayList<User> users = new ArrayList();
+            Query query = database.getReference("visitors").orderByChild("mob").equalTo(mob);
+            query.addListenerForSingleValueEvent((new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.exists()){
+                        preUser();
+                    }else{
+                        Log.i("new", "user");
+                        newUser();
+                    }
+//                    for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
+//                        users.add(singleSnapshot.getValue(User.class));
+//                        Log.i("items added", " to users");
+//                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                  Log.i("error in database", databaseError.toString());
+                }
+            });
+        }
     }
 
     public void take_pht(View view) {
@@ -94,18 +144,20 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    public void uploadFile(File cfile){
+    public void uploadFile(File cfile, final String mob, String ref){
+        myRef = database.getReference(ref);
         Uri file = Uri.fromFile(new File(cfile.getPath()));
         StorageReference riversRef = mStorageRef.child("images/"+System.currentTimeMillis()+".jpg");
-
         riversRef.putFile(file)
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                        Toast.makeText(getApplicationContext(), "file uploaded sucessfully", Toast.LENGTH_SHORT).show();
-                        Log.i("myfile path: ", myfile.getPath());
-                        myfile.delete();
+                        Uri picuri = taskSnapshot.getDownloadUrl();
+                        Log.i("picuri: ", picuri.toString());
+                        String id = myRef.push().getKey();
+                        User u = new User(mob, picuri.toString());
+                        myRef.child(id).setValue(u);
+                        Toast.makeText(getApplicationContext(), "file added", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -131,8 +183,8 @@ public class MainActivity extends AppCompatActivity {
         public void onVerificationCompleted(PhoneAuthCredential phoneAuthCredential) {
 
             //Getting the code sent by SMS
-            String code = phoneAuthCredential.getSmsCode();
-            Log.i("code: ", code);
+            otpCode = phoneAuthCredential.getSmsCode();
+            Log.i("code: ", otpCode);
             //sometime the code is not detected automatically
             //in this case the code will be null
             //so user has to manually enter the code
