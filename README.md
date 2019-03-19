@@ -4,9 +4,9 @@ A visitor Management app which keeps track of people visiting the app
 
 # Workflow
 1. The user has to first enter his mobile number in the app
-<p align="center">
-<img src="https://github.com/vaibnak/testapp/blob/master/f.png" width="200" height="300"/>
-</p>
+ <p align="center">
+  <img src="https://github.com/vaibnak/testapp/blob/master/f.png" width="200" height="300"/>
+ </p>
 2. If he is a new user, using app for the first time <br>
   2.1 He will have to upload his pictures first <br>
   <p align="center">
@@ -32,6 +32,7 @@ A visitor Management app which keeps track of people visiting the app
   <img src="https://github.com/vaibnak/testapp/blob/master/eig.png" width="200" height="300"/>
   <img src="https://github.com/vaibnak/testapp/blob/master/sev.png" width="200" height="300"/>
   </p>
+  
 # Technologies Used
 Java, XML, Android Studio, Firebase realtime Database, Firebase Storage, Firebase authentication, Rxjava, Camerakit, Compressor(Android compression library)
   
