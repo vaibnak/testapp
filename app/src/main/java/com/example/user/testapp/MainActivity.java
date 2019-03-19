@@ -99,20 +99,9 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
     public void showpg(){
         progressBar.setVisibility(View.VISIBLE);
     }
+
     public void stoppg(){
         progressBar.setVisibility(View.GONE);
-    }
-
-    //function to take otp back from dialog box
-    @Override
-    public void applyTexts(String otp) {
-        verifyVerificationCode(otp);
-    }
-
-    //function for new user
-    public void newUser() {
-        btnaddpic.setVisibility(View.VISIBLE);
-        btnup.setVisibility(View.GONE);
     }
 
     public void showsnackbar(String msg){
@@ -120,49 +109,30 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
         snackbar.show();
     }
 
-    //function for existing user
-    public void preUser() {
-        //update the visiticount of that user
-        showpg();
-        Query query = database.getReference("visitors").orderByChild("mob").equalTo(mob);
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot singleSnapshot : dataSnapshot.getChildren()) {
-                    stoppg();
-                    User u = singleSnapshot.getValue(User.class);
-                    int val = u.visitCount + 1;
-                    singleSnapshot.getRef().child("visitCount").setValue(val);
-                    showsnackbar("welcome for the "+val+" time");
-                    signout();
-                }
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+    public void signout(){
+        FirebaseAuth.getInstance().signOut();
+        textInputEditText.setText("");
+        sharedPreferences.edit().clear().commit();
     }
 
-    //function that runs on upload button clicking
+    //function that runs on visit button clicking
     public void upld(View view) {
         mob = textInputEditText.getText().toString();
         if (mob.length() != 10) {
             showsnackbar("Check the mobile number entered");
         } else {
             sharedPreferences.edit().putString("mobile", mob).apply();
-            //Now check if the no. is already registered in the database if yes, then just call the uploadFile function
-            //if not call otp screen logic and use the sendotp code
             showpg();
-            final ArrayList<User> users = new ArrayList();
             Query query = database.getReference("visitors").orderByChild("mob").equalTo(mob);
             query.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     stoppg();
                     if (dataSnapshot.exists()) {
+                        //If user already exists
                         preUser();
                     } else {
+                        //If user is new
                         newUser();
                     }
                 }
@@ -175,20 +145,52 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
         }
     }
 
+    //function for new user
+    public void newUser() {
+        btnaddpic.setVisibility(View.VISIBLE);
+        btnup.setVisibility(View.GONE);
+    }
+
+    //function for existing user
+    public void preUser() {
+        //update the visitcount of that user
+        showpg();
+        Query query = database.getReference("visitors").orderByChild("mob").equalTo(mob);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot singleSnapshot : dataSnapshot.getChildren()) {
+                    stoppg();
+                    User u = singleSnapshot.getValue(User.class);
+                    int val = u.visitCount + 1;
+                    singleSnapshot.getRef().child("visitCount").setValue(val);
+                    showsnackbar("welcome for the "+val+" time");
+                    //signout on workdone
+                    signout();
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                showsnackbar("Error in database");
+                signout();
+            }
+        });
+    }
+
+    //function to take otp back from dialog box
+    @Override
+    public void applyTexts(String otp) {
+        verifyVerificationCode(otp);
+    }
+
+
     //function that runs on addpic button
     public void take_pht(View view) {
         Intent intent = new Intent(getApplicationContext(), Takepic.class);
         startActivity(intent);
     }
 
-    //function to run on compression process completion
-    public void onCompressComplete() {
-        sendotp();
-        ExampleDialog exampleDialog = new ExampleDialog();
-        exampleDialog.show(getSupportFragmentManager(), "example dialog");
-
-    }
-
+    //compressing function
     public void compressit(File actualImage) {
         new Compressor(this)
                 .compressToFileAsFlowable(actualImage)
@@ -208,12 +210,15 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
                 });
     }
 
-    public void signout(){
-        FirebaseAuth.getInstance().signOut();
-        textInputEditText.setText("");
-        sharedPreferences.edit().clear().commit();
+    //function to run on compression process completion
+    public void onCompressComplete() {
+        sendotp();
+        ExampleDialog exampleDialog = new ExampleDialog();
+        exampleDialog.show(getSupportFragmentManager(), "example dialog");
     }
 
+
+   //function to upload image in firebase database
     public void uploadFile(File cfile, final String mob, final String ref) {
         showpg();
         myRef = database.getReference(ref);
@@ -250,7 +255,6 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
     }
 
     private void sendVerificationCode(String mobile) {
-        Log.i("mobile: ", mobile);
         PhoneAuthProvider.getInstance().verifyPhoneNumber(
                 "+91" + mobile,
                 60,
