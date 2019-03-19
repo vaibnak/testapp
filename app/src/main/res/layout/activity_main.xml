@@ -2,11 +2,20 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relativelayout"
     android:layout_width="match_parent"
-    android:orientation="vertical"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="16dp"
     tools:context=".MainActivity">
+
+    <ProgressBar
+        android:id="@+id/pgbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="121dp" />
 
     <android.support.design.widget.TextInputLayout
         android:layout_width="match_parent"
@@ -26,22 +35,34 @@
 
     <Button
         android:id="@+id/btn_addpic"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="242dp"
-        android:text="Add picture"
-        android:onClick="take_pht"
-        />
-
-    <Button
-        android:id="@+id/btn_up"
-        android:layout_width="wrap_content"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="184dp"
+        android:layout_marginBottom="203dp"
+        android:background="#7e08da"
+        android:onClick="take_pht"
+        android:text="Add picture"
+        android:textAllCaps="false"
+        android:textColor="#ffffff"
+        android:textSize="17dp" />
+        <!---->
+        <!--android:textAllCaps="false"-->
+        <!---->
+        <!---->
+
+
+    <Button
+        android:id="@+id/btn_up"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="137dp"
+        android:background="#7e08da"
+        android:textColor="#ffffff"
         android:onClick="upld"
-        android:text="upload" />
+        android:text="Visit"
+        android:textAllCaps="false"
+        android:textSize="15dp" />
 </RelativeLayout>

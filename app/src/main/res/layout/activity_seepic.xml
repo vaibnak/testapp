@@ -18,31 +18,47 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="125dp"
+        android:layout_marginBottom="134dp"
         android:gravity="center"
-        android:textColor="@android:color/holo_purple"
         android:text="How`s the pic"
-        android:layout_alignParentLeft="true" />
-    <Button
-        android:id="@+id/upld"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginBottom="58dp"
-        android:text="pretty nice"
-        android:onClick="okPic"
-        android:layout_marginHorizontal="10dp"
-        android:layout_alignParentLeft="true" />
+        android:textColor="@android:color/holo_purple"
+        android:textFontWeight="20sp"
+        android:textStyle="bold" />
 
-    <Button
-        android:id="@+id/gback"
-        android:onClick="takePic"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
-        android:layout_marginHorizontal="10dp"
-        android:text="take another one"
-        android:layout_alignParentLeft="true" />
+        android:layout_alignParentLeft="true">
+
+        <Button
+            android:layout_marginBottom="20dp"
+            android:id="@+id/upld"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="#40f981"
+            android:gravity="center"
+            android:onClick="okPic"
+            android:text="pretty nice"
+            android:textAllCaps="false"
+            android:textSize="17dp" />
+
+        <Button
+            android:id="@+id/gback"
+            android:layout_marginBottom="5dp"
+            android:layout_gravity="center"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:background="#ff7770"
+            android:onClick="takePic"
+            android:text="take another one"
+            android:textAllCaps="false"
+            android:textSize="17dp" />
+
+    </LinearLayout>
+
+
 </RelativeLayout>

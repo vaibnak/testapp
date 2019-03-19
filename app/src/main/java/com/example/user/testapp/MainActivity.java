@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -58,13 +60,15 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
     private String otpCode;
     private SharedPreferences sharedPreferences;
     private FirebaseAuth mAuth;
-
+    private RelativeLayout relativeLayout;
+    private ProgressBar progressBar;
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         setContentView(R.layout.activity_main);
 
         //instantiating all variables
+        relativeLayout = findViewById(R.id.relativelayout);
         textInputEditText = findViewById(R.id.inp_mb);
         mAuth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
@@ -72,6 +76,8 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
         btnup = findViewById(R.id.btn_up);
         btnaddpic = findViewById(R.id.btn_addpic);
         btnaddpic.setVisibility(View.GONE);
+        progressBar = findViewById(R.id.pgbar);
+        progressBar.setVisibility(View.GONE);
 
         //using sharedpreferences to store the no. so that it can be retrieved back after coming from another activity
         sharedPreferences = getSharedPreferences(mob, Context.MODE_PRIVATE);
@@ -90,6 +96,13 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
         }
     }
 
+    public void showpg(){
+        progressBar.setVisibility(View.VISIBLE);
+    }
+    public void stoppg(){
+        progressBar.setVisibility(View.GONE);
+    }
+
     //function to take otp back from dialog box
     @Override
     public void applyTexts(String otp) {
@@ -102,17 +115,26 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
         btnup.setVisibility(View.GONE);
     }
 
+    public void showsnackbar(String msg){
+        Snackbar snackbar = Snackbar.make(relativeLayout, msg, Snackbar.LENGTH_SHORT);
+        snackbar.show();
+    }
+
     //function for existing user
     public void preUser() {
         //update the visiticount of that user
+        showpg();
         Query query = database.getReference("visitors").orderByChild("mob").equalTo(mob);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot singleSnapshot : dataSnapshot.getChildren()) {
+                    stoppg();
                     User u = singleSnapshot.getValue(User.class);
                     int val = u.visitCount + 1;
                     singleSnapshot.getRef().child("visitCount").setValue(val);
+                    showsnackbar("welcome for the "+val+" time");
+                    signout();
                 }
             }
             @Override
@@ -126,17 +148,18 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
     public void upld(View view) {
         mob = textInputEditText.getText().toString();
         if (mob.length() != 10) {
-            //implement a snackbar here
-            Toast.makeText(getApplicationContext(), "mobile number not ok", Toast.LENGTH_SHORT).show();
+            showsnackbar("Check the mobile number entered");
         } else {
             sharedPreferences.edit().putString("mobile", mob).apply();
             //Now check if the no. is already registered in the database if yes, then just call the uploadFile function
             //if not call otp screen logic and use the sendotp code
+            showpg();
             final ArrayList<User> users = new ArrayList();
             Query query = database.getReference("visitors").orderByChild("mob").equalTo(mob);
             query.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
+                    stoppg();
                     if (dataSnapshot.exists()) {
                         preUser();
                     } else {
@@ -145,7 +168,8 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
                 }
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-                    Log.i("error in database", databaseError.toString());
+                    stoppg();
+                    showsnackbar("Error in database connection");
                 }
             });
         }
@@ -162,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
         sendotp();
         ExampleDialog exampleDialog = new ExampleDialog();
         exampleDialog.show(getSupportFragmentManager(), "example dialog");
+
     }
 
     public void compressit(File actualImage) {
@@ -190,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
     }
 
     public void uploadFile(File cfile, final String mob, final String ref) {
+        showpg();
         myRef = database.getReference(ref);
         Uri file = Uri.fromFile(new File(cfile.getPath()));
         StorageReference riversRef = mStorageRef.child("images/" + System.currentTimeMillis() + ".jpg");
@@ -199,13 +225,17 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Uri picuri = taskSnapshot.getDownloadUrl();
                         String id = myRef.push().getKey();
+                        stoppg();
                         if (ref == "visitors") {
+                            showsnackbar("New user added");
                             User u = new User(mob, picuri.toString());
                             myRef.child(id).setValue(u);
                         } else {
+                            showsnackbar("You have entered wrong OTP");
                             SuspUser us = new SuspUser(mob, picuri.toString());
                             myRef.child(id).setValue(us);
                         }
+
                         //signing user out once his work has been done
                         signout();
                     }
@@ -213,8 +243,8 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception exception) {
-                        Toast.makeText(getApplicationContext(), "file upload failure ", Toast.LENGTH_SHORT).show();
-                        Log.i("error", exception.toString());
+                        stoppg();
+                        showsnackbar("Firebase storage failure ");
                     }
                 });
     }
@@ -241,7 +271,7 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
 
         @Override
         public void onVerificationFailed(FirebaseException e) {
-            Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
+            showsnackbar("Verificaion process error");
         }
 
         @Override
@@ -258,10 +288,12 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
     }
 
     private void signInWithPhoneAuthCredential(PhoneAuthCredential credential) {
+        showpg();
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
+                        stoppg();
                         if (task.isSuccessful()) {
                             uploadFile(cfile, mob, "visitors");
                             Log.i("authentication ", "Succesful");
@@ -270,8 +302,5 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
                         }
                     }
                 });
-
     }
-
-
 }
