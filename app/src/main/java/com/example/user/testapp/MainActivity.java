@@ -212,9 +212,8 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
 
     //function to run on compression process completion
     public void onCompressComplete() {
+        showpg();
         sendotp();
-        ExampleDialog exampleDialog = new ExampleDialog();
-        exampleDialog.show(getSupportFragmentManager(), "example dialog");
     }
 
 
@@ -275,6 +274,7 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
 
         @Override
         public void onVerificationFailed(FirebaseException e) {
+            stoppg();
             showsnackbar("Verificaion process error");
         }
 
@@ -282,7 +282,10 @@ public class MainActivity extends AppCompatActivity implements ExampleDialog.Exa
         public void onCodeSent(String s, PhoneAuthProvider.ForceResendingToken forceResendingToken) {
             super.onCodeSent(s, forceResendingToken);
             //storing the verification id that is sent to the user
+            stoppg();
             mVerificationId = s;
+            ExampleDialog exampleDialog = new ExampleDialog();
+            exampleDialog.show(getSupportFragmentManager(), "example dialog");
         }
     };
 
